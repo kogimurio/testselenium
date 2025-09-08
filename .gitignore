@@ -1,0 +1,6 @@
+/lib
+/Scripts
+/include
+/pyvenv.cfg
+db.sqlite3
+__pycache__/
