@@ -3,8 +3,14 @@
 <ul>
     {% for job in page_obj %}
     <li>
-        <strong>{{ job.title }}</strong> at {{ job.company }} ({{ job.location }})
+        <strong>{{ job.title }}</strong> at {{ job.company }} ({{ job.location }}) 
         <a href="{{ job.url }}" target="_blank">View job</a>
+        <span><a href="{% url 'edit_job' job.id %}">Edit</a></span>
+        <span><a href="{% url 'delete_job' job.id %}"
+            onclick="return confirm('Are you sure you what to delete {{ job.title }}?')"
+            >
+            Delete
+        </a></span>
     </li>
     {% endfor %}
 </ul>

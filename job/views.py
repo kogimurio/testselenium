@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from .models import JobListing
 from django.http import HttpResponse
@@ -46,4 +46,22 @@ def add_job(request):
             return HttpResponse(f"Error same url already exists")
     return render(request, 'jobs/add_job.html')
 
+def edit_job(request, job_id):
+    job = get_object_or_404(JobListing, id=job_id)
+    
+    if request.method == 'POST':
+        job.title = request.POST.get('title')
+        job.company = request.POST.get('company')
+        job.location = request.POST.get('location')
+        job.url = request.POST.get('url')
+        job.save()
+        return redirect("job_list")
+        
+    return render(request, 'jobs/edit_job.html', {'job': job})
+
+
+def delete_job(request, job_id):
+    job = get_object_or_404(JobListing, id=job_id)
+    job.delete()
+    return redirect('job_list')
 
