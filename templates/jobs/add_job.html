@@ -1,5 +1,5 @@
 <h2>Add a Job</h2>
-<form method="post">
+<form method="post" enctype="multipart/form-data">
     {% csrf_token %}
         <label>Title:</label>
             <input
@@ -25,6 +25,11 @@
                 type="text"
                 name="url"
                 required
+            /> <br><br>
+        <label>Image:</label>
+            <input
+                type="file"
+                name="image"
             /> <br><br>
         <button type="submit">Add Job</button>
 </form>

@@ -3,6 +3,9 @@
 <ul>
     {% for job in page_obj %}
     <li>
+        {% if job.image %}
+            <img src="{{ job.image.url }}" alt="{{ job.company }}" width="20" />
+        {% endif %}
         <strong>{{ job.title }}</strong> at {{ job.company }} ({{ job.location }}) 
         <a href="{{ job.url }}" target="_blank">View job</a>
         <span><a href="{% url 'edit_job' job.id %}">Edit</a></span>

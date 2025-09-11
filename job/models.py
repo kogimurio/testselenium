@@ -5,6 +5,11 @@ class JobListing(models.Model):
     company = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
     url = models.URLField(unique=True)
+    image = models.ImageField(
+        upload_to="job_images/",
+        null=True,
+        blank=True
+    )
     date_posted = models.DateField(auto_now_add=True)
     
     class Meta:

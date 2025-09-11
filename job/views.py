@@ -29,6 +29,7 @@ def add_job(request):
         title = request.POST.get('title')
         company = request.POST.get('company')
         location = request.POST.get('location')
+        image= request.FILES.get('image')
         url = request.POST.get('url')
         
         try:
@@ -36,7 +37,7 @@ def add_job(request):
                 title=title,
                 company=company,
                 location=location,
-                defaults={'url': url, 'date_posted': date.today()}
+                defaults={'url': url, 'date_posted': date.today(), "image": image}
             )
             if created:
                 return redirect('/')
