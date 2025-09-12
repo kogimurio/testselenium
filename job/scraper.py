@@ -62,7 +62,7 @@ def scrape_linkedin():
     password_input.send_keys(Keys.RETURN)
 
     # --- Keywords to search ---
-    keywords = ["Data Science"]
+    keywords = ["developer"]
 
     for keyword in keywords:
         print(f"\n🔎 Search for: {keyword}")
@@ -98,28 +98,41 @@ def scrape_linkedin():
             continue
 
         print("Top 5 LinkedIn job titles:")
-        for job in jobs[:10]:
+        seen = set()
+        for idx in range(min(10, len(jobs))):
             try:
+                job = driver.find_elements(By.CSS_SELECTOR, "div.job-card-container")[idx]
+                
                 title_el = job.find_element(By.CSS_SELECTOR, "a.job-card-list__title--link")
                 company_el = job.find_element(By.CSS_SELECTOR, "div.artdeco-entity-lockup__subtitle span")
                 location_el = job.find_element(By.CSS_SELECTOR, "div.artdeco-entity-lockup__caption li span")
+                
+                try:
+                    image_el = job.find_element(By.CSS_SELECTOR, "div.job-card-list__logo img")
+                    image = image_el.get_attribute("src").strip() if image_el else None
+                except:
+                    image = None
 
                 title = title_el.text.strip()
                 company = company_el.text.strip() if company_el else 'Unknown'
                 location = location_el.text.strip() if location_el else 'Unknown'
                 url = title_el.get_attribute("href")
+                
+                if url in seen: # skip duplicates
+                    continue
+                seen.add(url)
 
                 # Optional filter
-                if keyword.lower() not in title.lower():
-                    continue
+                # if keyword.lower() not in title.lower():
+                #     continue
 
-                print("-", title, "|", company, "|", location, "|", url)
+                print("-", title, "|", company, "|", location, "|", image, "|", url)
 
                 JobListing.objects.get_or_create(
                     title=title,
                     company=company,
                     location=location,
-                    defaults={"url": url, "date_posted": date.today()},
+                    defaults={"url": url, "date_posted": date.today(), "image": image},
                 )
             except Exception as e:
                 print("⚠️ Skipped one card:", e)
