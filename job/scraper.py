@@ -6,6 +6,10 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 from .models import JobListing
 from datetime import date
+import os
+import requests
+from django.core.files.base import ContentFile
+from django.conf import settings
 
 # Fetch jobs from indeed
 def scrape_indeed():
@@ -46,6 +50,18 @@ def scrape_indeed():
     # Close browser
     driver.quit()
     
+def save_logo_from_url(job, image_url):
+    if not image_url:
+        return None
+    
+    try:
+        response = requests.get(image_url, timeout=10)
+        if response.status_code == 200:
+            filename = f"{job.company}_{os.path.basename(image_url.split("?")[0])}"
+            job.image.save(filename, ContentFile(response.content), save=True)
+    except Exception as e:
+        print("Could not download logo:", e)
+    
     
 def scrape_linkedin():
     driver = webdriver.Chrome()
@@ -62,7 +78,7 @@ def scrape_linkedin():
     password_input.send_keys(Keys.RETURN)
 
     # --- Keywords to search ---
-    keywords = ["developer"]
+    keywords = ["Engineer"]
 
     for keyword in keywords:
         print(f"\n🔎 Search for: {keyword}")
@@ -128,12 +144,15 @@ def scrape_linkedin():
 
                 print("-", title, "|", company, "|", location, "|", image, "|", url)
 
-                JobListing.objects.get_or_create(
+                job, created = JobListing.objects.get_or_create(
                     title=title,
                     company=company,
                     location=location,
-                    defaults={"url": url, "date_posted": date.today(), "image": image},
+                    defaults={"url": url, "date_posted": date.today()},
                 )
+                
+                if created and image:
+                    save_logo_from_url(job, image)
             except Exception as e:
                 print("⚠️ Skipped one card:", e)
 
