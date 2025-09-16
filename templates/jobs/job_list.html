@@ -1,30 +1,71 @@
-<h2>Job Listings</h2>
-<a href="add/">Add New Job</a>
-<ul>
-    {% for job in page_obj %}
-    <li>
-        {% if job.image %}
-            <img src="{{ job.image.url }}" alt="{{ job.company }}" width="20" />
-        {% endif %}
-        <strong>{{ job.title }}</strong> at {{ job.company }} ({{ job.location }}) 
-        <a href="{{ job.url }}" target="_blank">View job</a>
-        <span><a href="{% url 'edit_job' job.id %}">Edit</a></span>
-        <span><a href="{% url 'delete_job' job.id %}"
-            onclick="return confirm('Are you sure you what to delete {{ job.title }}?')"
-            >
-            Delete
-        </a></span>
-    </li>
-    {% endfor %}
-</ul>
-<div>
-    {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
-    {% endif %}
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Job Listings</title>
+        <link rel="stylesheet" href="{% static 'jobs/styles.css' %}">
+    </head>
+    <body>
+        <h2>Job Listings</h2>
+        
+        <div class="main_container">
+            <div class="top_section">
+                <div class="top_left">
+                    <a href="add/">Add New Job</a>
+                </div>
+                <div class="top_right">
+                    <form>
+                        {% csrf_token %}
+                            <input 
+                            type="text"
+                            name="q"
+                            placeholder="Search jobs..."
+                        />
+                        <button type="submit">Search</button>
+                    </form>
+                </div>
+            </div>
+            <div class="job_container">
+                {% for job in page_obj %}
+                <div class="job_card">
+                    <div>
+                        {% if job.image %}
+                            <img src="{{ job.image.url }}" alt="{{ job.company }}" width="20" />
+                        {% endif %}
+                    </div>
+                    <div class="job_details">
+                        <div class="job_title">
+                            <strong>{{ job.title }}</strong>
+                        </div>
+                        <div class="job_company">
+                            {{ job.company }} ({{ job.location }}) 
+                        </div>
+                        <div class="job_actions">
+                            <a href="{{ job.url }}" target="_blank">View job</a>
+                            <span><a href="{% url 'edit_job' job.id %}">Edit</a></span>
+                            <span><a href="{% url 'delete_job' job.id %}"
+                                onclick="return confirm('Are you sure you what to delete {{ job.title }}?')"
+                                >
+                                Delete
+                            </a></span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                {% endif %}
 
-    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
 
-    {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">Next</a>
-    {% endif %}
-</div>
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        
+    </body>
+</html>
+
