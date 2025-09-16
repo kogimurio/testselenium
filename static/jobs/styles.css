@@ -63,6 +63,7 @@ h2 {
     border: none;
     background-color: #007BFF;
     color: white;
+    cursor: pointer;
 }
 
 .job_container {

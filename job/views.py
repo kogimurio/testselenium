@@ -3,6 +3,7 @@ from django.core.paginator import Paginator
 from .models import JobListing
 from django.http import HttpResponse
 from datetime import date
+from .scraper import scrape_jobs_linkedin
 
 
 def job_listings(request):
@@ -66,3 +67,11 @@ def delete_job(request, job_id):
     job.delete()
     return redirect('job_list')
 
+def scrape_linkedin(request):
+    query = request.GET.get("q")
+    if query:
+        try:
+            scrape_jobs_linkedin(query)
+        except Exception as e:
+            return HttpResponse(f"Error during scraping: {e}")
+    return redirect('job_list')

@@ -63,7 +63,7 @@ def save_logo_from_url(job, image_url):
         print("Could not download logo:", e)
     
     
-def scrape_linkedin():
+def scrape_jobs_linkedin(keyword):
     driver = webdriver.Chrome()
     driver.get("https://www.linkedin.com/login")
 
@@ -77,85 +77,82 @@ def scrape_linkedin():
     password_input.send_keys("kogi@murio87")
     password_input.send_keys(Keys.RETURN)
 
-    # --- Keywords to search ---
-    keywords = ["Engineer"]
 
-    for keyword in keywords:
-        print(f"\n🔎 Search for: {keyword}")
-        driver.get("https://www.linkedin.com/jobs/search/")
-        time.sleep(5)
+    print(f"\n🔎 Search for: {keyword}")
+    driver.get("https://www.linkedin.com/jobs/search/")
+    time.sleep(5)
 
-        # --- Search box ---
-        search_box = WebDriverWait(driver, 20).until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, "input[aria-label='Search by title, skill, or company']")
-            )
+    # --- Search box ---
+    search_box = WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located(
+            (By.CSS_SELECTOR, "input[aria-label='Search by title, skill, or company']")
         )
-        search_box.clear()
-        search_box.send_keys(keyword)
-        search_box.send_keys(Keys.RETURN)
+    )
+    search_box.clear()
+    search_box.send_keys(keyword)
+    search_box.send_keys(Keys.RETURN)
 
-        # --- Retry loop for job cards ---
-        jobs = []
-        for i in range(5):
+    # --- Retry loop for job cards ---
+    jobs = []
+    for i in range(5):
+        try:
+            jobs = WebDriverWait(driver, 5).until(
+                EC.visibility_of_all_elements_located((By.CSS_SELECTOR, "div.job-card-container"))
+            )
+            if jobs:
+                break
+        except:
+            print(f"⚠️ No jobs yet, scrolling... (try {i+1})")
+            driver.execute_script("window.scrollBy(0, 1000);")
+            time.sleep(3)
+
+    if not jobs:
+        print(f"❌ No jobs for {keyword}")
+        driver.quit()
+        return
+
+    print("Top 5 LinkedIn job titles:")
+    seen = set()
+    for idx in range(min(10, len(jobs))):
+        try:
+            job = driver.find_elements(By.CSS_SELECTOR, "div.job-card-container")[idx]
+            
+            title_el = job.find_element(By.CSS_SELECTOR, "a.job-card-list__title--link")
+            company_el = job.find_element(By.CSS_SELECTOR, "div.artdeco-entity-lockup__subtitle span")
+            location_el = job.find_element(By.CSS_SELECTOR, "div.artdeco-entity-lockup__caption li span")
+            
             try:
-                jobs = WebDriverWait(driver, 5).until(
-                    EC.visibility_of_all_elements_located((By.CSS_SELECTOR, "div.job-card-container"))
-                )
-                if jobs:
-                    break
+                image_el = job.find_element(By.CSS_SELECTOR, "div.job-card-list__logo img")
+                image = image_el.get_attribute("src").strip() if image_el else None
             except:
-                print(f"⚠️ No jobs yet, scrolling... (try {i+1})")
-                driver.execute_script("window.scrollBy(0, 1000);")
-                time.sleep(3)
+                image = None
 
-        if not jobs:
-            print(f"❌ No jobs for {keyword}")
-            continue
+            title = title_el.text.strip()
+            company = company_el.text.strip() if company_el else 'Unknown'
+            location = location_el.text.strip() if location_el else 'Unknown'
+            url = title_el.get_attribute("href")
+            
+            if url in seen: # skip duplicates
+                continue
+            seen.add(url)
 
-        print("Top 5 LinkedIn job titles:")
-        seen = set()
-        for idx in range(min(10, len(jobs))):
-            try:
-                job = driver.find_elements(By.CSS_SELECTOR, "div.job-card-container")[idx]
-                
-                title_el = job.find_element(By.CSS_SELECTOR, "a.job-card-list__title--link")
-                company_el = job.find_element(By.CSS_SELECTOR, "div.artdeco-entity-lockup__subtitle span")
-                location_el = job.find_element(By.CSS_SELECTOR, "div.artdeco-entity-lockup__caption li span")
-                
-                try:
-                    image_el = job.find_element(By.CSS_SELECTOR, "div.job-card-list__logo img")
-                    image = image_el.get_attribute("src").strip() if image_el else None
-                except:
-                    image = None
+            # Optional filter
+            if keyword.lower() not in title.lower():
+                continue
 
-                title = title_el.text.strip()
-                company = company_el.text.strip() if company_el else 'Unknown'
-                location = location_el.text.strip() if location_el else 'Unknown'
-                url = title_el.get_attribute("href")
-                
-                if url in seen: # skip duplicates
-                    continue
-                seen.add(url)
+            print("-", title, "|", company, "|", location, "|", image, "|", url)
 
-                # Optional filter
-                # if keyword.lower() not in title.lower():
-                #     continue
+            job, created = JobListing.objects.get_or_create(
+                title=title,
+                company=company,
+                location=location,
+                defaults={"url": url, "date_posted": date.today()},
+            )
+            
+            if created and image:
+                save_logo_from_url(job, image)
+        except Exception as e:
+            print("⚠️ Skipped one card:", e)
 
-                print("-", title, "|", company, "|", location, "|", image, "|", url)
-
-                job, created = JobListing.objects.get_or_create(
-                    title=title,
-                    company=company,
-                    location=location,
-                    defaults={"url": url, "date_posted": date.today()},
-                )
-                
-                if created and image:
-                    save_logo_from_url(job, image)
-            except Exception as e:
-                print("⚠️ Skipped one card:", e)
-
-    # ✅ Quit driver only after all keywords are done
     driver.quit()
 

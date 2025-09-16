@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 class JobListing(models.Model):
     title = models.CharField(max_length=255)
@@ -17,3 +19,8 @@ class JobListing(models.Model):
         
     def __str__(self):
         return f"{self.title} at {self.company} ({self.location})"
+    
+@receiver(post_delete, sender=JobListing)
+def delete_job_logo(sender, instance, **kwargs):
+    if instance.image and instance.image.storage.exists(instance.image.name):
+        instance.image.delete(save=False)
