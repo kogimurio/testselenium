@@ -80,7 +80,6 @@ def scrape_jobs_linkedin(keyword):
 
     print(f"\n🔎 Search for: {keyword}")
     driver.get("https://www.linkedin.com/jobs/search/")
-    time.sleep(5)
 
     # --- Search box ---
     search_box = WebDriverWait(driver, 20).until(
@@ -103,7 +102,7 @@ def scrape_jobs_linkedin(keyword):
                 break
         except:
             print(f"⚠️ No jobs yet, scrolling... (try {i+1})")
-            driver.execute_script("window.scrollBy(0, 1000);")
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(3)
 
     if not jobs:
